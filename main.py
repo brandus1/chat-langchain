@@ -1,4 +1,5 @@
 """Main entrypoint for the app."""
+import os
 import logging
 import pickle
 from pathlib import Path
@@ -86,8 +87,9 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.post("/video")
 async def ingest_video(request: VideoIngestRequest):
     video_url = request.url
-    download_audio(video_url)
-    
+    mp3_file = download_audio(video_url, output_path="data")
+    print(f"Downloaded {mp3_file}")
+    txt_file = transcribe_audio(mp3_file)
 
 # downloads yt_url to the same directory from which the script runs
 def download_audio(yt_url, output_path="data"):
@@ -100,8 +102,40 @@ def download_audio(yt_url, output_path="data"):
             'preferredquality': '192',
         }],
     }
+
+    # Extract video information
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        video_info = ydl.extract_info(yt_url, download=False)
+        video_title = video_info['title']
+        video_ext = 'mp3'
+
+    # Check if the file already exists
+    output_filename = f'{output_path}/{video_title}.{video_ext}'
+    if os.path.isfile(output_filename):
+        print(f'Audio file for "{video_title}" already exists.')
+        return output_filename
+
+    # Download the video if it doesn't exist
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([yt_url])
+
+    # return the file path
+    return output_filename
+
+def transcribe_audio(file_path):
+    "Transcribe using Whisper "
+    out_path = os.path.splitext(file_path)[0] + ".txt"
+    if os.path.isfile(out_path):
+        print(f"Transcription for {file_path} already exists.")
+        return out_path
+
+    import whisper
+    model = whisper.load_model("tiny")
+    result = model.transcribe(file_path)
+    # save the result to a file
+    with open(out_path, "w") as f:
+        f.write(result['text'])
+    return out_path
 
 if __name__ == "__main__":
     import uvicorn
