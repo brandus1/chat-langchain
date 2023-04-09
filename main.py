@@ -12,6 +12,16 @@ from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
 from query_data import get_chain
 from schemas import ChatResponse
 
+import yt_dlp # client to many multimedia portals
+
+from pydantic import BaseModel
+class VideoIngestRequest(BaseModel):
+    url: str
+
+#load dot env
+from dotenv import load_dotenv
+load_dotenv()
+
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 vectorstore: Optional[VectorStore] = None
@@ -73,6 +83,25 @@ async def websocket_endpoint(websocket: WebSocket):
             )
             await websocket.send_json(resp.dict())
 
+@app.post("/video")
+async def ingest_video(request: VideoIngestRequest):
+    video_url = request.url
+    download_audio(video_url)
+    
+
+# downloads yt_url to the same directory from which the script runs
+def download_audio(yt_url, output_path="data"):
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': f'{output_path}/%(title)s.%(ext)s',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([yt_url])
 
 if __name__ == "__main__":
     import uvicorn
