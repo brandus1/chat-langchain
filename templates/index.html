@@ -197,9 +197,25 @@
 
             videoLinkInput.value = "";
         }
+        async function summarizeText() {
+            const response = await fetch('/summarize');
+            const summarizedText = await response.text();
+
+            const summaryDiv = document.getElementById('summary');
+            const summaryText = document.getElementById('summary-text');
+
+            summaryText.textContent = summarizedText;
+            summaryDiv.classList.remove('hidden');
+        }
+
     </script>
 </head>
 <body class="bg-black">
+    <div id="summary" class="absolute top-0 right-0 bg-gray-800 text-white p-4 rounded-lg hidden">
+        <h4 class="font-medium">Summary:</h4>
+        <p id="summary-text" class="mt-2"></p>
+    </div>
+
     <div class="chat-body card">
         <div class="card-body p-5">
             <h4 class="card-title text-center text-xl font-medium"> Chat Your Data </h4>
@@ -219,6 +235,7 @@
                     <input type="text" id="videoLink" class="form-control" placeholder="Paste YouTube link" style="display: inline-block; width: 70%;">
                     <button type="submit" class="btn btn-info mt-2">Ingest Video</button>
                 </form>
+            <button id="summarize" class="btn btn-primary mt-2" onclick="summarizeText()">Summarize</button>
             </div>
 
             <hr class="border-gray-500 mb-5" style="margin-top: 20px;">

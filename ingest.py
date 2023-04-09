@@ -10,8 +10,7 @@ from langchain.vectorstores import FAISS
 from dotenv import load_dotenv
 load_dotenv()
 
-def ingest_docs():
-    """Get documents from web pages."""
+def load_docs():
     # loader = ReadTheDocsLoader("langchain.readthedocs.io/en/latest/")
     loader = DirectoryLoader("data", glob="*.txt")
     # loader = UnstructuredHTMLLoader("index.html")
@@ -21,6 +20,12 @@ def ingest_docs():
         chunk_overlap=200,
     )
     documents = text_splitter.split_documents(raw_documents)
+    return documents
+
+def ingest_docs():
+    """Get documents from web pages."""
+    documents = load_docs()
+
     embeddings = OpenAIEmbeddings()
     vectorstore = FAISS.from_documents(documents, embeddings)
 

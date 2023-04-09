@@ -84,6 +84,19 @@ async def websocket_endpoint(websocket: WebSocket):
             )
             await websocket.send_json(resp.dict())
 
+@app.get("/summarize")
+async def summarize():
+    from langchain.chains.summarize import load_summarize_chain
+    from langchain.llms import OpenAI
+    chain = load_summarize_chain(OpenAI(temperature=0), chain_type="refine")
+    from ingest import load_docs    
+    docs = load_docs()
+    summary = chain.run(input_documents=docs, return_only_outputs=True) 
+    # save summary to file
+    with open("summary.txt", "w") as f:
+        f.write(summary)
+    return summary
+
 @app.post("/video")
 async def ingest_video(request: VideoIngestRequest):
     video_url = request.url
