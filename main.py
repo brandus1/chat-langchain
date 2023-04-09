@@ -90,6 +90,8 @@ async def ingest_video(request: VideoIngestRequest):
     mp3_file = download_audio(video_url, output_path="data")
     print(f"Downloaded {mp3_file}")
     txt_file = transcribe_audio(mp3_file)
+    from ingest import ingest_docs
+    ingest_docs()
 
 # downloads yt_url to the same directory from which the script runs
 def download_audio(yt_url, output_path="data"):
