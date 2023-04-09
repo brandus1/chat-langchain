@@ -49,6 +49,16 @@
         .form-message {
           margin-top: 10px;
         }
+
+        .file-uploader {
+            text-align: right;
+            margin-bottom: 10px;
+        }
+        .video-ingester {
+            text-align: right;
+            margin-bottom: 10px;
+        }
+
     </style>
     <script>
         var endpoint = "ws://localhost:9000/chat";
@@ -121,6 +131,72 @@
             button.innerHTML = "Loading...";
             button.disabled = true;
         }
+
+        // New function to handle file uploads
+        async function uploadFile(event) {
+            event.preventDefault();
+            var fileInput = document.getElementById('fileInput');
+            var file = fileInput.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('file', file);
+
+            // Send the file to the /upload endpoint
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+
+                alert('File uploaded successfully.');
+            } catch (error) {
+                console.error('Error uploading the file:', error);
+                alert('Error uploading the file.');
+            }
+
+            fileInput.value = "";
+        }
+
+        // New function to handle video ingestion
+        async function ingestVideo(event) {
+            event.preventDefault();
+            var videoLinkInput = document.getElementById('videoLink');
+            var videoLink = videoLinkInput.value;
+
+            if (!videoLink) {
+                return;
+            }
+
+            // Send the YouTube link to the /video endpoint
+            try {
+                const response = await fetch('/video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: videoLink })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+
+                alert('Video ingested successfully.');
+            } catch (error) {
+                console.error('Error ingesting the video:', error);
+                alert('Error ingesting the video.');
+            }
+
+            videoLinkInput.value = "";
+        }
     </script>
 </head>
 <body class="bg-black">
@@ -128,6 +204,23 @@
         <div class="card-body p-5">
             <h4 class="card-title text-center text-xl font-medium"> Chat Your Data </h4>
             <p class="card-text text-center text-sm" id="header"> Ask a question </p>
+
+            <!-- Move the file uploader div inside the card-body div -->
+            <div class="file-uploader">
+                <form action="" id="file-upload-form" onsubmit="uploadFile(event)">
+                    <input type="file" id="fileInput" class="form-control-file">
+                    <button type="submit" class="btn btn-secondary mt-2">Upload</button>
+                </form>
+            </div>
+
+            <!-- New div for the video ingester -->
+            <div class="video-ingester">
+                <form action="" id="video-ingest-form" onsubmit="ingestVideo(event)">
+                    <input type="text" id="videoLink" class="form-control" placeholder="Paste YouTube link" style="display: inline-block; width: 70%;">
+                    <button type="submit" class="btn btn-info mt-2">Ingest Video</button>
+                </form>
+            </div>
+
             <hr class="border-gray-500 mb-5" style="margin-top: 20px;">
             <div id="messages" class="overflow-auto" style="max-height: 500px;">
             </div>
@@ -135,7 +228,6 @@
                 <input type="text" class="form-control" placeholder="Write your question" id="messageText">
                 <button id="send" type="submit" class="btn btn-primary">Send</button>
             </form>
-        </div>
     </div>
 </body>
 </html>
